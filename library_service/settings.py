@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # new apps
     "books",
     "users",
+    "borrowings",
 ]
 
 MIDDLEWARE = [
