@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # new apps
     "books",
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -111,6 +112,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
+AUTH_USER_MODEL = "users.User"
+
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
@@ -143,6 +146,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZE",
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
