@@ -4,8 +4,14 @@ from borrowings.serializers import BorrowingReadSerializer, BorrowingCreateSeria
 
 
 class BorrowingViewSet(viewsets.ModelViewSet):
-    queryset = Borrowing.objects.select_related("book", "user").all()
+    queryset = Borrowing.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if self.action == "list":
+            queryset = queryset.select_related("book", "user")
+        return queryset
 
     def get_serializer_class(self):
         """Use different serializers for different actions."""

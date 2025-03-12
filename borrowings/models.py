@@ -3,6 +3,7 @@ from django.db import models
 from django.conf import settings
 from books.models import Book
 
+
 class Borrowing(models.Model):
     borrow_date = models.DateField(auto_now_add=True)
     expected_return_date = models.DateField()
@@ -23,21 +24,21 @@ class Borrowing(models.Model):
             ),
         ]
 
-    @staticmethod
-    def validate_borrowing(book, error_to_raise):
-        """Ensures book inventory is not 0 before borrowing."""
-        if book.inventory <= 0:
-            raise error_to_raise(
-                {"book": f"Book '{book.title}' is out of stock and cannot be borrowed."}
-            )
+    def validate(self):
+        """Ensures book inventory is not 0 before borrowing and validates return dates."""
+        if self.book.inventory <= 0:
+            raise ValidationError({"book": f"Book '{self.book.title}' is out of stock and cannot be borrowed."})
+
+        if self.expected_return_date <= self.borrow_date:
+            raise ValidationError({"expected_return_date": "Expected return date must be after the borrow date."})
 
     def clean(self):
-        """Runs validation before saving."""
-        Borrowing.validate_borrowing(self.book, ValidationError)
+        """Runs all validations before saving."""
+        self.validate()
 
     def save(self, *args, **kwargs):
         """Validates, decreases inventory, and saves the borrowing."""
-        self.full_clean()
+        self.full_clean()  # Ensures validation is triggered
         self.book.inventory -= 1
         self.book.save(update_fields=["inventory"])
         super().save(*args, **kwargs)
