@@ -1,6 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
-
 from books.models import Book
 
 
@@ -23,6 +23,25 @@ class Borrowing(models.Model):
                 name="check_actual_return_after_borrow",
             ),
         ]
+
+    def validate(self):
+        """Ensures book inventory is not 0 before borrowing and validates return dates."""
+        if self.book.inventory <= 0:
+            raise ValidationError({"book": f"Book '{self.book.title}' is out of stock and cannot be borrowed."})
+
+        if self.expected_return_date <= self.borrow_date:
+            raise ValidationError({"expected_return_date": "Expected return date must be after the borrow date."})
+
+    def clean(self):
+        """Runs all validations before saving."""
+        self.validate()
+
+    def save(self, *args, **kwargs):
+        """Validates, decreases inventory, and saves the borrowing."""
+        self.full_clean()  # Ensures validation is triggered
+        self.book.inventory -= 1
+        self.book.save(update_fields=["inventory"])
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user} borrowed {self.book} on {self.borrow_date}"
