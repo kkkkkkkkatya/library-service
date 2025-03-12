@@ -44,3 +44,20 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         borrowing = Borrowing.objects.create(user=user, **validated_data)
         return borrowing
+
+
+class BorrowingReturnSerializer(serializers.ModelSerializer):
+    """Serializer for returning a borrowed book."""
+
+    class Meta:
+        model = Borrowing
+        fields = ["id", "actual_return_date"]
+        read_only_fields = ["id", "actual_return_date"]
+
+    def update(self, instance, validated_data):
+        """Handles book return logic."""
+        if instance.actual_return_date is not None:
+            raise serializers.ValidationError({"actual_return_date": "This borrowing has already been returned."})
+
+        instance.return_borrowing()
+        return instance
