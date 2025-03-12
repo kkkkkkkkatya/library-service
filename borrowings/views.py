@@ -11,7 +11,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action == "list":
             queryset = queryset.select_related("book", "user")
-        return queryset
+        return queryset.filter(user=self.request.user)
 
     def get_serializer_class(self):
         """Use different serializers for different actions."""
