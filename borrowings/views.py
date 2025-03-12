@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, permissions
 from borrowings.models import Borrowing
 from borrowings.serializers import BorrowingReadSerializer, BorrowingCreateSerializer
@@ -8,9 +10,24 @@ class BorrowingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        queryset = self.queryset
-        if self.action == "list":
-            queryset = queryset.select_related("book", "user")
+        queryset = self.queryset.select_related("book", "user")
+
+        # Filter by active borrowings (not returned yet)
+        is_active = self.request.query_params.get("is_active", None)
+        if is_active is not None:
+            is_active = is_active.lower() == "true"
+            if is_active:
+                queryset = queryset.filter(actual_return_date__isnull=True)
+            else:
+                queryset = queryset.filter(actual_return_date__isnull=False)
+
+        user_id = self.request.query_params.get("user_id", None)
+        if self.request.user.is_staff:
+            if user_id is not None:
+                queryset = queryset.filter(user_id=user_id)
+        else:
+            queryset = queryset.filter(user=self.request.user)
+
         return queryset
 
     def get_serializer_class(self):
@@ -18,3 +35,20 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return BorrowingReadSerializer
         return BorrowingCreateSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "is_active",
+                type=OpenApiTypes.BOOL,
+                description="Filter by active borrowings (not returned yet). Use ?is_active=true or ?is_active=false",
+            ),
+            OpenApiParameter(
+                "user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by specific user ID (Admins only). Use ?user_id=1",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)

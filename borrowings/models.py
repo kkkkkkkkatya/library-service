@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.utils.timezone import now
+
 from books.models import Book
 
 
@@ -28,6 +30,9 @@ class Borrowing(models.Model):
         """Ensures book inventory is not 0 before borrowing and validates return dates."""
         if self.book.inventory <= 0:
             raise ValidationError({"book": f"Book '{self.book.title}' is out of stock and cannot be borrowed."})
+
+        if self.borrow_date is None:
+            self.borrow_date = now().date()
 
         if self.expected_return_date <= self.borrow_date:
             raise ValidationError({"expected_return_date": "Expected return date must be after the borrow date."})
