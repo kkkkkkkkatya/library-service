@@ -18,7 +18,15 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(actual_return_date__isnull=True)
             else:
                 queryset = queryset.filter(actual_return_date__isnull=False)
-        return queryset.filter(user=self.request.user)
+
+        user_id = self.request.query_params.get("user_id", None)
+        if self.request.user.is_staff:
+            if user_id is not None:
+                queryset = queryset.filter(user_id=user_id)
+        else:
+            queryset = queryset.filter(user=self.request.user)
+
+        return queryset
 
     def get_serializer_class(self):
         """Use different serializers for different actions."""
