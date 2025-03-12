@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from borrowings.models import Borrowing
@@ -23,7 +25,15 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Validate borrowing using the model method before saving."""
         data = super().validate(attrs)
+        borrow_date = date.today()  # auto_now_add doesn't exist in attrs
+        expected_return_date = attrs["expected_return_date"]
         Borrowing.validate_borrowing(attrs["book"], ValidationError)
+
+        if expected_return_date <= borrow_date:
+            raise serializers.ValidationError(
+                {"expected_return_date": "Expected return date must be after the borrow date."}
+            )
+
         return data
 
     def create(self, validated_data):
