@@ -10,3 +10,9 @@ class BorrowingReadSerializer(serializers.ModelSerializer):
         model = Borrowing
         fields = ["id", "borrow_date", "expected_return_date", "actual_return_date", "book", "user"]
         read_only_fields = ["id", "borrow_date", "user"]
+
+
+class BorrowingWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Borrowing
+        fields = ["id", "borrow_date", "expected_return_date", "actual_return_date","book"]
