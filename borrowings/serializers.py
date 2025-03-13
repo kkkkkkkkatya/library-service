@@ -9,11 +9,20 @@ from utils.telegram_helper import send_telegram_message
 
 
 class BorrowingReadSerializer(serializers.ModelSerializer):
+    """Serializer for reading borrowings in different actions."""
+
     book = BookSerializer(read_only=True)
 
     class Meta:
         model = Borrowing
-        fields = ["id", "borrow_date", "expected_return_date", "actual_return_date", "book", "user"]
+        fields = [
+            "id",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "book",
+            "user",
+        ]
         read_only_fields = ["id", "borrow_date", "user"]
 
 
@@ -42,7 +51,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Attach the current user and create a borrowing."""
+        """Attach the current user, create a borrowing and send message in telegram chat."""
         user = self.context["request"].user
         borrowing = Borrowing.objects.create(user=user, **validated_data)
 
@@ -68,7 +77,9 @@ class BorrowingReturnSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         """Handles book return logic."""
         if instance.actual_return_date is not None:
-            raise serializers.ValidationError({"actual_return_date": "This borrowing has already been returned."})
+            raise serializers.ValidationError(
+                {"actual_return_date": "This borrowing has already been returned."}
+            )
 
         instance.return_borrowing()
         return instance

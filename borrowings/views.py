@@ -11,14 +11,16 @@ from borrowings.models import Borrowing
 from borrowings.serializers import (
     BorrowingReadSerializer,
     BorrowingCreateSerializer,
-    BorrowingReturnSerializer
+    BorrowingReturnSerializer,
 )
 
 
-class BorrowingViewSet(mixins.CreateModelMixin,
-                        mixins.ListModelMixin,
-                        mixins.RetrieveModelMixin,
-                        GenericViewSet):
+class BorrowingViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    GenericViewSet,
+):
     queryset = Borrowing.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
@@ -34,12 +36,15 @@ class BorrowingViewSet(mixins.CreateModelMixin,
             else:
                 queryset = queryset.filter(actual_return_date__isnull=False)
 
+        # Filter by users (only for admins)
         user_id = self.request.query_params.get("user_id", None)
         if self.request.user.is_staff:
             if user_id is not None:
                 queryset = queryset.filter(user_id=user_id)
         else:
-            queryset = queryset.filter(user=self.request.user)
+            queryset = queryset.filter(
+                user=self.request.user
+            )  # user sees only his borrowings
 
         return queryset
 
@@ -68,8 +73,9 @@ class BorrowingViewSet(mixins.CreateModelMixin,
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-
-    @action(detail=True, methods=["POST"], permission_classes=[permissions.IsAuthenticated])
+    @action(
+        detail=True, methods=["POST"], permission_classes=[permissions.IsAuthenticated]
+    )
     def return_borrowing(self, request, pk=None):
         """Mark a borrowing as returned and increase book inventory."""
         borrowing = self.get_object()
@@ -94,4 +100,6 @@ class BorrowingViewSet(mixins.CreateModelMixin,
         borrowing.book.save(update_fields=["inventory"])
         borrowing.save(update_fields=["actual_return_date"])
 
-        return Response({"message": "Book returned successfully!"}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Book returned successfully!"}, status=status.HTTP_200_OK
+        )
