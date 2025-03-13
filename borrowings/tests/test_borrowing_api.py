@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -13,6 +14,7 @@ from borrowings.serializers import BorrowingReadSerializer
 
 
 BORROWINGS_URL = reverse("borrowings:borrowing-list")
+
 
 def sample_book(title="Sample Book", inventory=5):
     """Helper function to create a book."""
@@ -52,8 +54,9 @@ class AuthenticatedBorrowingApiTests(TestCase):
         )
         self.client.force_authenticate(self.user)
 
-    def test_create_borrowing(self):
-        """Test auth user can create borrowing."""
+    @patch("borrowings.serializers.send_telegram_message")  # Mock Telegram message function
+    def test_create_borrowing_sends_notification(self, mock_send_telegram):
+        """Test that borrowing creation works and sends a Telegram notification."""
         book = sample_book()
 
         payload = {
@@ -64,8 +67,21 @@ class AuthenticatedBorrowingApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Borrowing.objects.count(), 1)
+
         borrowing = Borrowing.objects.first()
         self.assertEqual(borrowing.user, self.user)
+
+        # Verify that send_telegram_message was called once
+        mock_send_telegram.assert_called_once()
+
+        # Check the expected message format
+        expected_message = (
+            f"New Borrowing Created:\n"
+            f"User: {self.user.email}\n"
+            f"Book: {borrowing.book.title}\n"
+            f"Expected Return Date: {borrowing.expected_return_date}"
+        )
+        mock_send_telegram.assert_called_with(expected_message)
 
     def test_create_borrowing_with_wrong_expected_return_date(self):
         """Test can not create borrowing with wrong expected return date."""
@@ -104,7 +120,6 @@ class AuthenticatedBorrowingApiTests(TestCase):
             password="testpass",
         )
         sample_borrowing(user=other_user)
-
 
         res = self.client.get(BORROWINGS_URL)
 
@@ -198,7 +213,6 @@ class AdminBorrowingApiTests(TestCase):
             password="testpass2",
         )
         sample_borrowing(user=other_user2)
-
 
         res = self.client.get(BORROWINGS_URL)
 
