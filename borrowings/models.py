@@ -37,16 +37,32 @@ class Borrowing(models.Model):
         if self.expected_return_date <= self.borrow_date:
             raise ValidationError({"expected_return_date": "Expected return date must be after the borrow date."})
 
+        if self.actual_return_date is not None and self.actual_return_date < self.borrow_date:
+            raise ValidationError({"actual_return_date": "Return date cannot be before the borrow date."})
+
     def clean(self):
         """Runs all validations before saving."""
         self.validate()
 
     def save(self, *args, **kwargs):
-        """Validates, decreases inventory, and saves the borrowing."""
-        self.full_clean()  # Ensures validation is triggered
-        self.book.inventory -= 1
-        self.book.save(update_fields=["inventory"])
+        if self.pk:  # Only check inventory when updating (not creating)
+            old_borrowing = Borrowing.objects.get(pk=self.pk)
+            if old_borrowing.actual_return_date is None and self.actual_return_date is not None:
+                self.book.inventory += 1
+                self.book.save(update_fields=["inventory"])
+        else:
+            self.book.inventory -= 1
+            self.book.save(update_fields=["inventory"])
+
         super().save(*args, **kwargs)
+
+    def return_borrowing(self):
+        """Marks borrowing as returned and increases inventory."""
+        if self.actual_return_date is not None:
+            raise ValidationError({"actual_return_date": "This book has already been returned."})
+
+        self.actual_return_date = now().date()
+        self.save(update_fields=["actual_return_date"])
 
     def __str__(self):
         return f"{self.user} borrowed {self.book} on {self.borrow_date}"
