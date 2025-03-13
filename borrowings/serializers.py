@@ -2,8 +2,10 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
+
 from borrowings.models import Borrowing
 from books.serializers import BookSerializer
+from utils.telegram_helper import send_telegram_message
 
 
 class BorrowingReadSerializer(serializers.ModelSerializer):
@@ -43,6 +45,15 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         """Attach the current user and create a borrowing."""
         user = self.context["request"].user
         borrowing = Borrowing.objects.create(user=user, **validated_data)
+
+        message = (
+            f"New Borrowing Created:\n"
+            f"User: {user.email}\n"
+            f"Book: {borrowing.book.title}\n"
+            f"Expected Return Date: {borrowing.expected_return_date}"
+        )
+        send_telegram_message(message)
+
         return borrowing
 
 
