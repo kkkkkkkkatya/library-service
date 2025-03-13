@@ -9,7 +9,12 @@ The Library Service REST API is an online management system for book borrowings.
 - Admin panel /admin/
 - Running using localhost
 - The interactive API documentation powered by Swagger at `http://127.0.0.1:8000/api/doc/swagger/`.
-- Managing books
+- Open book info list/retrieve for all users
+- Borrow books and return them if you are registered
+- Filtering your borrowings 
+- Managing books and borrowings (for admins)
+- Telegram chat for admins where you can see borrowings info 'https://t.me/+2rJt5JRuaZozYzli'
+- Notification system for new borrowing creation
 
 ### Steps
 1. Clone the repository:

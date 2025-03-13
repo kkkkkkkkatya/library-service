@@ -84,7 +84,6 @@ class AuthenticatedBookApiTests(TestCase):
         )
         self.client.force_authenticate(self.user)
 
-
     def test_create_book_forbidden_authorized(self):
         """Test that non-admin users cannot create a book"""
         payload = {
