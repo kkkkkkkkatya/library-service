@@ -7,7 +7,7 @@ The Library Service REST API is an online management system for book borrowings.
 ## **Features**
 - JWT authenticated
 - Admin panel /admin/
-- Running using localhost
+- Running using localhost and Docker
 - The interactive API documentation powered by Swagger at `http://127.0.0.1:8000/api/doc/swagger/`.
 - Open book info list/retrieve for all users
 - Borrow books and return them if you are registered
@@ -15,6 +15,15 @@ The Library Service REST API is an online management system for book borrowings.
 - Managing books and borrowings (for admins)
 - Telegram chat for admins where you can see borrowings info 'https://t.me/+2rJt5JRuaZozYzli'
 - Notification system for new borrowing creation
+
+
+## Installation
+### Requirements
+- Docker
+- Docker Compose
+- Python 3.8+
+- PostgreSQL
+
 
 ### Steps
 1. Clone the repository:
@@ -46,8 +55,30 @@ The Library Service REST API is an online management system for book borrowings.
    python manage.py runserver
    ```
 
-## Usage
-- Visit `http://127.0.0.1:8000/` in your browser.
+## Running the API
+### Using Docker
+#### To run the API using Docker, follow these steps:
+
+- Ensure Docker and Docker Compose are installed.
+- You can pull doker using command:
+  ```bash
+   docker pull kkkkkkkktya/library_service
+   ```
+- Build and start the containers:
+  ```bash
+   docker-compose up --build
+   ```
+
+  The API will be accessible at http://localhost:8000/ once the containers are up and running.
+### Using localhost
+  If you prefer to run the API locally without Docker, follow these steps:
+
+Start the development server:
+  ```bash
+    python manage.py runserver
+  ```
+Access the API at http://127.0.0.1:8000/.
+
 
 ## Authentication
 The API uses JWT (JSON Web Tokens) for authentication. To obtain a token:
